@@ -1,3 +1,5 @@
+cd ~/ip-envoy
+cat > backend/main.py << 'EOF'
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 from typing import List, Optional
@@ -59,3 +61,4 @@ def record_ip(payload: IPRecordIn):
         raise HTTPException(status_code=500, detail=str(e))
 
     return {"ok": True, "record": record_with_hash}
+EOF
