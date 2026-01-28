@@ -3,8 +3,8 @@ from pydantic import BaseModel, Field
 from typing import List, Optional
 from datetime import datetime, timezone
 import json
-import os
 import uuid
+import hashlib
 
 app = FastAPI()
 
@@ -28,9 +28,17 @@ def health():
     return {"ok": True}
 
 
+def compute_record_hash(record: dict) -> str:
+    """
+    Compute a stable SHA-256 hash of the record content.
+    We hash a canonical JSON string with sorted keys so ordering doesn't change the hash.
+    """
+    canonical = json.dumps(record, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
+    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+
 @app.post("/record")
 def record_ip(payload: IPRecordIn):
-    # Create a tamper-evident-ish record structure (we’ll add hashing next)
     record = {
         "id": str(uuid.uuid4()),
         "created_at": datetime.now(timezone.utc).isoformat(),
@@ -40,10 +48,13 @@ def record_ip(payload: IPRecordIn):
         "tags": payload.tags or [],
     }
 
+    record_hash = compute_record_hash(record)
+    record_with_hash = {**record, "record_hash": record_hash}
+
     try:
         with open(DATA_FILE, "a", encoding="utf-8") as f:
-            f.write(json.dumps(record, ensure_ascii=False) + "\n")
+            f.write(json.dumps(record_with_hash, ensure_ascii=False) + "\n")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to store record: {e}")
 
-    return {"ok": True, "record": record}
+    return {"ok": True, "record": record_with_hash}
