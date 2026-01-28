@@ -8,7 +8,7 @@ import hashlib
 
 app = FastAPI()
 
-DATA_FILE = "ip_records.jsonl"  # JSON Lines file (one record per line)
+DATA_FILE = "ip_records.jsonl"
 
 
 class IPRecordIn(BaseModel):
@@ -29,11 +29,12 @@ def health():
 
 
 def compute_record_hash(record: dict) -> str:
-    """
-    Compute a stable SHA-256 hash of the record content.
-    We hash a canonical JSON string with sorted keys so ordering doesn't change the hash.
-    """
-    canonical = json.dumps(record, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
+    canonical = json.dumps(
+        record,
+        sort_keys=True,
+        ensure_ascii=False,
+        separators=(",", ":"),
+    )
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
 
@@ -55,6 +56,6 @@ def record_ip(payload: IPRecordIn):
         with open(DATA_FILE, "a", encoding="utf-8") as f:
             f.write(json.dumps(record_with_hash, ensure_ascii=False) + "\n")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to store record: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
     return {"ok": True, "record": record_with_hash}
