@@ -31,6 +31,7 @@ def health():
 
 
 def compute_record_hash(record: dict) -> str:
+<<<<<<< HEAD
     canonical = json.dumps(
         record,
         sort_keys=True,
@@ -38,6 +39,9 @@ def compute_record_hash(record: dict) -> str:
         separators=(",", ":"),
     )
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+=======
+
+>>>>>>> bdb21a9 (:wq)
 
 
 @app.post("/record")
